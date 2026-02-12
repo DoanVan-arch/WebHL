@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Học liệu - Trường Sĩ quan Chính trị</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <h1>
+            Quản lý Học liệu Trường Sĩ quan Chính trị
+            <span class="header-badge">SQCT</span>
+        </h1>
+        <div class="user-info">
+            <div class="user-profile">
+                <div class="user-avatar">{{ user.full_name[0].upper() }}</div>
+                <div>
+                    <div style="font-weight: 600;">{{ user.full_name }}</div>
+                    <div style="font-size: 12px; opacity: 0.9;">{{ user.role.value }}</div>
+                </div>
+            </div>
+            <form method="POST" action="/api/logout" style="margin: 0;">
+                <button type="submit" class="btn-logout">Đăng xuất</button>
+            </form>
+        </div>
+    </header>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h2>Menu chính</h2>
+            <p>Điều hướng hệ thống</p>
+        </div>
+        <div class="department-list">
+            <a href="/dashboard" class="department-item" style="text-decoration: none; color: inherit;">
+                <span class="department-code">📊</span>
+                <span class="department-name">Dashboard</span>
+            </a>
+            <a href="/materials" class="department-item active" style="text-decoration: none; color: inherit;">
+                <span class="department-code">📚</span>
+                <span class="department-name">Quản lý Học liệu</span>
+            </a>
+            <a href="/statistics" class="department-item" style="text-decoration: none; color: inherit;">
+                <span class="department-code">📈</span>
+                <span class="department-name">Thống kê</span>
+            </a>
+        </div>
+        <div class="sidebar-header" style="margin-top: 0;">
+            <h2>Danh mục Khoa</h2>
+            <p>Chọn khoa để xem học liệu</p>
+        </div>
+        <div class="department-list" id="departmentList">
+            <!-- Departments will be loaded by JavaScript -->
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="content-header">
+            <h2>Học liệu</h2>
+            <div style="display: flex; gap: 10px;">
+                {% if user.role.value == 'admin' %}
+                <button class="btn-primary" onclick="showUserManagement()">
+                    👥 Quản lý người dùng
+                </button>
+                {% endif %}
+                {% if user.role.value in ['superuser', 'admin'] %}
+                <button class="btn-primary" onclick="showUploadModal()">
+                    ➕ Đăng học liệu mới
+                </button>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Filter Toggle Button -->
+        <div class="filter-toggle-container">
+            <button class="btn-filter-toggle" onclick="toggleFilter()">
+                <span id="filterToggleIcon">▼</span> Bộ lọc tìm kiếm
+            </button>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="filter-bar" id="filterBar">
+            <div class="filter-group">
+                <label for="filterSearch">Tìm kiếm</label>
+                <input type="text" id="filterSearch" placeholder="Tìm theo tiêu đề, môn học, chủ đề...">
+            </div>
+            <div class="filter-group">
+                <label for="filterUploader">Người đăng</label>
+                <input type="text" id="filterUploader" placeholder="Tìm theo tên người đăng...">
+            </div>
+            <div class="filter-group">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="searchContent" onchange="toggleContentSearch()">
+                    <span>Tìm kiếm theo nội dung file</span>
+                </label>
+                <small style="color: #666; font-size: 12px;">⚠️ Tìm kiếm theo nội dung có thể mất nhiều thời gian hơn</small>
+            </div>
+        </div>
+
+        <!-- Column Visibility Controls -->
+        <div class="column-controls">
+            <button class="btn-column-toggle" onclick="toggleColumnControls()">
+                ⚙️ Tùy chỉnh cột hiển thị
+            </button>
+            <button class="btn-column-toggle" onclick="toggleColumnFilters()" style="margin-left: 10px; background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);">
+                🔽 Ẩn/Hiện bộ lọc
+            </button>
+            <button class="btn-column-toggle" onclick="resetColumnFilters()" style="margin-left: 10px; background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);">
+                🔄 Reset bộ lọc
+            </button>
+            <div class="column-checkboxes" id="columnCheckboxes" style="display: none;">
+                <label><input type="checkbox" checked onchange="toggleColumn('col-stt')" id="toggle-stt"> STT</label>
+                <label><input type="checkbox" checked onchange="toggleColumn('col-title')" id="toggle-title"> Tiêu đề</label>
+                <label><input type="checkbox" checked onchange="toggleColumn('col-subject')" id="toggle-subject"> Môn học</label>
+                <label><input type="checkbox" checked onchange="toggleColumn('col-topic')" id="toggle-topic"> Chủ đề</label>
+                <label><input type="checkbox" checked onchange="toggleColumn('col-files')" id="toggle-files"> Số file</label>
+                <label><input type="checkbox" checked onchange="toggleColumn('col-uploader')" id="toggle-uploader"> Người đăng</label>
+                <label><input type="checkbox" checked onchange="toggleColumn('col-date')" id="toggle-date"> Ngày đăng</label>
+            </div>
+        </div>
+
+        <!-- Materials Table -->
+        <div class="materials-table-container" id="materialsTableContainer">
+            <table class="materials-table">
+                <thead>
+                    <tr>
+                        <th class="col-stt" style="width: 50px;">
+                            STT
+                        </th>
+                        <th class="col-title" style="width: 40%;">
+                            Tiêu đề
+                        </th>
+                        <th class="col-subject">
+                            Môn học
+                            <select class="column-filter filter-dropdown" id="filterSubject" onchange="filterByColumn('subject', this.value)">
+                                <option value="">-- Tất cả --</option>
+                            </select>
+                        </th>
+                        <th class="col-topic">
+                            Chủ đề
+                            <select class="column-filter filter-dropdown" id="filterTopic" onchange="filterByColumn('topic', this.value)">
+                                <option value="">-- Tất cả --</option>
+                            </select>
+                        </th>
+                        <th class="col-files">Số file</th>
+                        <th class="col-uploader">
+                            Người đăng
+                            <select class="column-filter filter-dropdown" id="filterUploaderSelect" onchange="filterByColumn('uploader', this.value)">
+                                <option value="">-- Tất cả --</option>
+                            </select>
+                        </th>
+                        <th class="col-date">
+                            Ngày đăng
+                            <div style="margin-top: 8px;">
+                                <input type="date" class="column-filter-date filter-dropdown" id="filterDateFrom" onchange="filterByDateRange()" placeholder="Từ ngày">
+                                <input type="date" class="column-filter-date filter-dropdown" id="filterDateTo" onchange="filterByDateRange()" placeholder="Đến ngày" style="margin-top: 4px;">
+                            </div>
+                        </th>
+                        <th style="width: 160px;">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody id="materialsTableBody">
+                    <!-- Materials will be loaded by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-info">
+                <div class="footer-section">
+                    <h3>Đơn vị phát triển</h3>
+                    <p>Bộ môn KHTN - Khoa Văn hóa Ngoại ngữ</p>
+                    <p>Ban CNTT - Phòng Tham mưu Hành chính</p>
+                    <p>Trường Sĩ quan Chính trị</p>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>Thông tin liên hệ</h3>
+                    <div class="contact-info">
+                        <span>👨‍💻</span>
+                        <p>Phát triển bởi: <strong>Ngô Hồng Quân</strong></p>
+                    </div>
+                    <div class="contact-info">
+                        <span>📱</span>
+                        <p>Zalo: <a href="https://zalo.me/0972424294">0972424294</a></p>
+                    </div>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>Hệ thống</h3>
+                    <p>Hệ thống quản lý học liệu điện tử</p>
+                    <p>Phiên bản: 2.0.0</p>
+                    <p>Năm phát triển: 2026</p>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2026 Trường Sĩ quan Chính trị. Phát triển bởi Ngô Hồng Quân - Bộ môn KHTN.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Upload Modal -->
+    {% if user.role.value in ['superuser', 'admin'] %}
+    <div class="modal" id="uploadModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Đăng học liệu mới</h3>
+                <button class="btn-close" onclick="closeModal('uploadModal')">&times;</button>
+            </div>
+            
+            <form id="uploadForm" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="title">Tiêu đề <span style="color: red;">*</span></label>
+                    <input type="text" id="title" name="title" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="subject">Môn học <span style="color: red;">*</span></label>
+                    <input type="text" id="subject" name="subject" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="topic">Chủ đề</label>
+                    <input type="text" id="topic" name="topic">
+                </div>
+
+                <div class="form-group">
+                    <label for="department_id">Khoa <span style="color: red;">*</span></label>
+                    <select id="department_id" name="department_id" required>
+                        <option value="">Chọn khoa</option>
+                        {% for dept in departments %}
+                        <option value="{{ dept.id }}">{{ dept.code }} - {{ dept.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>File Tài liệu</label>
+                    <input type="file" name="tailieu_files" multiple 
+                           accept=".pdf,.doc,.docx,.xls,.xlsx,.zip,.rar">
+                    <small style="color: #666;">Có thể chọn nhiều file</small>
+                </div>
+
+                <div class="form-group">
+                    <label>File Bài giảng</label>
+                    <input type="file" name="baigiang_files" multiple 
+                           accept=".pdf,.doc,.docx,.ppt,.pptx">
+                    <small style="color: #666;">Có thể chọn nhiều file</small>
+                </div>
+
+                <div class="form-group">
+                    <label>File Đề cương</label>
+                    <input type="file" name="decuong_files" multiple 
+                           accept=".pdf,.doc,.docx">
+                    <small style="color: #666;">Có thể chọn nhiều file</small>
+                </div>
+
+                <div class="form-group">
+                    <label>File Trình chiếu</label>
+                    <input type="file" name="trinhchieu_files" multiple 
+                           accept=".ppt,.pptx,.pdf">
+                    <small style="color: #666;">Có thể chọn nhiều file</small>
+                </div>
+
+                <p style="font-size: 13px; color: #999; margin-bottom: 15px;">
+                    * Vui lòng chọn ít nhất một file để đăng tải
+                </p>
+
+                <button type="submit" class="btn-submit">Đăng tải</button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Edit Material Modal -->
+    {% if user.role.value in ['superuser', 'admin'] %}
+    <div class="modal" id="editModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Chỉnh sửa học liệu</h3>
+                <button class="btn-close" onclick="closeModal('editModal')">&times;</button>
+            </div>
+            
+            <form id="editForm">
+                <input type="hidden" id="edit_material_id">
+                
+                <div class="form-group">
+                    <label for="edit_title">Tiêu đề <span style="color: red;">*</span></label>
+                    <input type="text" id="edit_title" name="title" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="edit_subject">Môn học <span style="color: red;">*</span></label>
+                    <input type="text" id="edit_subject" name="subject" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="edit_topic">Chủ đề</label>
+                    <input type="text" id="edit_topic" name="topic">
+                </div>
+
+                <div class="form-group">
+                    <label for="edit_department_id">Khoa <span style="color: red;">*</span></label>
+                    <select id="edit_department_id" name="department_id" required>
+                        <option value="">Chọn khoa</option>
+                        {% for dept in departments %}
+                        <option value="{{ dept.id }}">{{ dept.code }} - {{ dept.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <p style="font-size: 13px; color: #666; margin-bottom: 15px;">
+                    ℹ️ Chỉ có thể chỉnh sửa thông tin, không thể thay đổi file đính kèm.
+                </p>
+
+                <button type="submit" class="btn-submit">Cập nhật</button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- User Management Modal (Admin only) -->
+    {% if user.role.value == 'admin' %}
+    <div class="modal" id="userManagementModal">
+        <div class="modal-content" style="max-width: 900px;">
+            <div class="modal-header">
+                <h3>Quản lý người dùng</h3>
+                <button class="btn-close" onclick="closeModal('userManagementModal')">&times;</button>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <button class="btn-primary" onclick="showCreateUserModal()">➕ Thêm người dùng</button>
+            </div>
+            
+            <div class="users-table" id="usersTable">
+                <!-- Users will be loaded by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Create User Modal -->
+    <div class="modal" id="createUserModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Thêm người dùng mới</h3>
+                <button class="btn-close" onclick="closeModal('createUserModal')">&times;</button>
+            </div>
+            
+            <form id="createUserForm">
+                <div class="form-group">
+                    <label for="new_username">Tên đăng nhập <span style="color: red;">*</span></label>
+                    <input type="text" id="new_username" name="username" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="new_email">Email <span style="color: red;">*</span></label>
+                    <input type="email" id="new_email" name="email" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="new_full_name">Họ và tên <span style="color: red;">*</span></label>
+                    <input type="text" id="new_full_name" name="full_name" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="new_password">Mật khẩu <span style="color: red;">*</span></label>
+                    <input type="password" id="new_password" name="password" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="new_role">Quyền <span style="color: red;">*</span></label>
+                    <select id="new_role" name="role" required>
+                        <option value="user">User (Người xem)</option>
+                        <option value="superuser">Superuser (Người đăng)</option>
+                        <option value="admin">Admin (Quản trị viên)</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn-submit">Tạo người dùng</button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
+    <script>
+        const currentUserRole = "{{ user.role.value }}";
+        const currentUserId = {{ user.id }};
+    </script>
+    <script src="/static/js/main.js"></script>
+</body>
+</html>

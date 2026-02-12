@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chi tiết Học liệu - Trường Sĩ quan Chính trị</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <h1>
+            Quản lý Học liệu Trường Sĩ quan Chính trị
+            <span class="header-badge">SQCT</span>
+        </h1>
+        <div class="user-info">
+            <div class="user-profile">
+                <div class="user-avatar">{{ user.full_name[0].upper() }}</div>
+                <div>
+                    <div style="font-weight: 600;">{{ user.full_name }}</div>
+                    <div style="font-size: 12px; opacity: 0.9;">{{ user.role.value }}</div>
+                </div>
+            </div>
+            <form method="POST" action="/api/logout" style="margin: 0;">
+                <button type="submit" class="btn-logout">Đăng xuất</button>
+            </form>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content" style="margin-left: 0;">
+        <button class="btn-back" onclick="goBack()">
+            ← Quay lại danh sách
+        </button>
+
+        <div class="detail-container">
+            <div class="detail-main">
+                <div class="detail-header">
+                    <h2 id="materialTitle">Đang tải...</h2>
+                    <button id="deleteMaterialBtn" class="btn-delete" onclick="deleteMaterial()" style="display: none;">
+                        Xóa học liệu
+                    </button>
+                </div>
+
+                <div class="files-section">
+                    <h3>Tài liệu đính kèm</h3>
+                    <div id="filesList">
+                        <p style="color: #666;">Đang tải...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="detail-sidebar">
+                <h3 style="margin-bottom: 20px; color: var(--primary-color);">Thông tin</h3>
+                <div class="info-item">
+                    <strong>Môn học:</strong>
+                    <span id="materialSubject">-</span>
+                </div>
+                <div class="info-item">
+                    <strong>Chủ đề:</strong>
+                    <span id="materialTopic">-</span>
+                </div>
+                <div class="info-item">
+                    <strong>Khoa:</strong>
+                    <span id="materialDepartment">-</span>
+                </div>
+                <div class="info-item">
+                    <strong>Người đăng:</strong>
+                    <span id="materialUploader">-</span>
+                </div>
+                <div class="info-item">
+                    <strong>Ngày đăng:</strong>
+                    <span id="materialDate">-</span>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- PDF Preview Overlay -->
+    <div id="previewOverlay" class="preview-overlay">
+        <div class="preview-modal">
+            <div class="preview-header">
+                <h4 id="previewFileName">Xem trước PDF</h4>
+                <div class="preview-controls">
+                    <button id="prevPage" onclick="previousPage()">◄ Trước</button>
+                    <span id="pageInfo"></span>
+                    <button id="nextPage" onclick="nextPage()">Sau ►</button>
+                    <button onclick="closePreview()">✕ Đóng</button>
+                </div>
+            </div>
+            <div class="preview-body">
+                <div id="loadingIndicator" class="loading-indicator">
+                    <p>Đang tải PDF...</p>
+                </div>
+                <div id="pdfViewer" class="pdf-viewer"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer" style="margin-left: 0;">
+        <div class="footer-content">
+            <div class="footer-info">
+                <div class="footer-section">
+                    <h3>Đơn vị phát triển</h3>
+                    <p>Bộ môn KHTN - Khoa Văn hóa Ngoại ngữ</p>
+                    <p>Ban CNTT - Phòng Tham mưu Hành chính</p>
+                    <p>Trường Sĩ quan Chính trị</p>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>Thông tin liên hệ</h3>
+                    <div class="contact-info">
+                        <span>👨‍💻</span>
+                        <p>Phát triển bởi: <strong>Ngô Hồng Quân</strong></p>
+                    </div>
+                    <div class="contact-info">
+                        <span>📱</span>
+                        <p>Zalo: <a href="https://zalo.me/0972424294">0972424294</a></p>
+                    </div>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>Hệ thống</h3>
+                    <p>Hệ thống quản lý học liệu điện tử</p>
+                    <p>Phiên bản: 2.0.0</p>
+                    <p>Năm phát triển: 2026</p>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2026 Trường Sĩ quan Chính trị. Phát triển bởi Ngô Hồng Quân - Bộ môn KHTN.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        const currentUserRole = "{{ user.role.value }}";
+        const currentUserId = {{ user.id }};
+        const materialId = new URLSearchParams(window.location.search).get('id');
+    </script>
+    <script src="/static/js/detail.js"></script>
+</body>
+</html>

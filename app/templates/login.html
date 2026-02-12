@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng nhập - Quản lý Học liệu Trường Sĩ quan Chính trị</title>
+    <link rel="stylesheet" href="/static/css/login.css">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <h1>Quản lý Học liệu</h1>
+                <p>Trường Sĩ quan Chính trị</p>
+            </div>
+            
+            <div class="login-body">
+                {% if error %}
+                <div class="error-message">{{ error }}</div>
+                {% endif %}
+                
+                <form method="POST" action="/api/login">
+                    <div class="form-group">
+                        <label for="username">Tên đăng nhập</label>
+                        <input type="text" id="username" name="username" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="password">Mật khẩu</label>
+                        <input type="password" id="password" name="password" required>
+                    </div>
+                    
+                    <button type="submit" class="btn-login">Đăng nhập</button>
+                </form>
+                
+                <div class="register-link">
+                    Chưa có tài khoản? <a href="/register">Đăng ký ngay</a>
+                </div>
+            </div>
+            
+            <div class="login-footer">
+                &copy; 2026 Trường Sĩ quan Chính trị. All rights reserved.
+            </div>
+        </div>
+    </div>
+</body>
+</html>

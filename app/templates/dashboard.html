@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Quản lý Học liệu</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <h1>
+            Quản lý Học liệu Trường Sĩ quan Chính trị
+            <span class="header-badge">SQCT</span>
+        </h1>
+        <div class="user-info">
+            <div class="user-profile">
+                <div class="user-avatar">{{ user.full_name[0].upper() }}</div>
+                <div>
+                    <div style="font-weight: 600;">{{ user.full_name }}</div>
+                    <div style="font-size: 12px; opacity: 0.9;">{{ user.role.value }}</div>
+                </div>
+            </div>
+            <form method="POST" action="/api/logout" style="margin: 0;">
+                <button type="submit" class="btn-logout">Đăng xuất</button>
+            </form>
+        </div>
+    </header>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h2>Menu chính</h2>
+            <p>Điều hướng hệ thống</p>
+        </div>
+        <div class="department-list">
+            <a href="/dashboard" class="department-item active" style="text-decoration: none; color: inherit;">
+                <span class="department-code">📊</span>
+                <span class="department-name">Dashboard</span>
+            </a>
+            <a href="/materials" class="department-item" style="text-decoration: none; color: inherit;">
+                <span class="department-code">📚</span>
+                <span class="department-name">Quản lý Học liệu</span>
+            </a>
+            <a href="/statistics" class="department-item" style="text-decoration: none; color: inherit;">
+                <span class="department-code">📈</span>
+                <span class="department-name">Thống kê</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="content-header">
+            <h2>📊 Dashboard - Tổng quan hệ thống</h2>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="stats-grid">
+            <div class="stat-card stat-card-primary">
+                <div class="stat-icon">📚</div>
+                <div class="stat-info">
+                    <h3 id="totalMaterials">0</h3>
+                    <p>Tổng số học liệu</p>
+                </div>
+            </div>
+
+            <div class="stat-card stat-card-success">
+                <div class="stat-icon">👥</div>
+                <div class="stat-info">
+                    <h3 id="totalUsers">0</h3>
+                    <p>Tổng số người dùng</p>
+                </div>
+            </div>
+
+            <div class="stat-card stat-card-info">
+                <div class="stat-icon">🏫</div>
+                <div class="stat-info">
+                    <h3 id="totalDepartments">0</h3>
+                    <p>Số khoa</p>
+                </div>
+            </div>
+
+            <div class="stat-card stat-card-warning">
+                <div class="stat-icon">📅</div>
+                <div class="stat-info">
+                    <h3 id="materialsToday">0</h3>
+                    <p>Học liệu hôm nay</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Weekly and Monthly Stats -->
+        <div class="stats-grid-2">
+            <div class="stat-card stat-card-secondary">
+                <div class="stat-icon">📆</div>
+                <div class="stat-info">
+                    <h3 id="materialsWeek">0</h3>
+                    <p>Học liệu tuần này</p>
+                </div>
+            </div>
+
+            <div class="stat-card stat-card-secondary">
+                <div class="stat-icon">🗓️</div>
+                <div class="stat-info">
+                    <h3 id="materialsMonth">0</h3>
+                    <p>Học liệu tháng này</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="charts-container">
+            <!-- Department Chart -->
+            <div class="chart-card">
+                <h3>📊 Học liệu theo Khoa</h3>
+                <canvas id="departmentChart"></canvas>
+            </div>
+
+            <!-- Top Uploaders Chart -->
+            <div class="chart-card">
+                <h3>👑 Top 5 người đăng nhiều nhất</h3>
+                <canvas id="uploadersChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Recent Uploads Table -->
+        <div class="recent-uploads-section">
+            <h3>🕒 Học liệu mới nhất</h3>
+            <table class="materials-table">
+                <thead>
+                    <tr>
+                        <th>Tiêu đề</th>
+                        <th>Môn học</th>
+                        <th>Người đăng</th>
+                        <th>Khoa</th>
+                        <th>Ngày đăng</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody id="recentUploadsBody">
+                    <tr>
+                        <td colspan="6" style="text-align: center;">Đang tải...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <script src="/static/js/dashboard.js"></script>
+</body>
+</html>
